@@ -1,0 +1,541 @@
+---
+title: "Simulating fish probability in space-time"
+output: 
+  html_document:
+    theme: cerulean
+    highlight: pygments 
+    fig_caption: false
+    df_print: kable
+    code_folding: hide
+    toc: true
+    toc_float: 
+      collapsed: true
+    number_sections: true
+    self_contained: true
+    code_download: true
+---
+<style> body {text-align: justify} </style> <!-- Justify text. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, cache = TRUE)
+```
+
+```{r, include=FALSE}
+library(ggplot2)
+library(dplyr)
+load("./fit_pred.RData")
+
+
+data_all <- data.frame(probability = c(data_variables[[1]]$probability,
+                                   data_variables[[2]]$probability,
+                                   data_variables[[3]]$probability,
+                                   data_variables[[4]]$probability,
+                                   data_variables[[5]]$probability,
+                                   data_variables[[6]]$probability,
+                                   data_variables[[7]]$probability,
+                                   data_variables[[8]]$probability,
+                                   data_variables[[9]]$probability,
+                                   data_variables[[10]]$probability,
+                                   data_variables[[11]]$probability,
+                                   data_variables[[12]]$probability,
+                                   data_variables[[13]]$probability,
+                                   data_variables[[14]]$probability,
+                                   data_variables[[15]]$probability,
+                                   data_variables[[16]]$probability,
+                                   data_variables[[17]]$probability,
+                                   data_variables[[18]]$probability,
+                                   data_variables[[19]]$probability,
+                                   data_variables[[20]]$probability),
+                       
+                       x_coord = c(data_variables[[1]]$xcoord,
+                                   data_variables[[2]]$xcoord,
+                                   data_variables[[3]]$xcoord,
+                                   data_variables[[4]]$xcoord,
+                                   data_variables[[5]]$xcoord,
+                                   data_variables[[6]]$xcoord,
+                                   data_variables[[7]]$xcoord,
+                                   data_variables[[8]]$xcoord,
+                                   data_variables[[9]]$xcoord,
+                                   data_variables[[10]]$xcoord,
+                                   data_variables[[11]]$xcoord,
+                                   data_variables[[12]]$xcoord,
+                                   data_variables[[13]]$xcoord,
+                                   data_variables[[14]]$xcoord,
+                                   data_variables[[15]]$xcoord,
+                                   data_variables[[16]]$xcoord,
+                                   data_variables[[17]]$xcoord,
+                                   data_variables[[18]]$xcoord,
+                                   data_variables[[19]]$xcoord,
+                                   data_variables[[20]]$xcoord),
+                       
+                       y_coord = c(data_variables[[1]]$ycoord,
+                                   data_variables[[2]]$ycoord,
+                                   data_variables[[3]]$ycoord,
+                                   data_variables[[4]]$ycoord,
+                                   data_variables[[5]]$ycoord,
+                                   data_variables[[6]]$ycoord,
+                                   data_variables[[7]]$ycoord,
+                                   data_variables[[8]]$ycoord,
+                                   data_variables[[9]]$ycoord,
+                                   data_variables[[10]]$ycoord,
+                                   data_variables[[11]]$ycoord,
+                                   data_variables[[12]]$ycoord,
+                                   data_variables[[13]]$ycoord,
+                                   data_variables[[14]]$ycoord,
+                                   data_variables[[15]]$ycoord,
+                                   data_variables[[16]]$ycoord,
+                                   data_variables[[17]]$ycoord,
+                                   data_variables[[18]]$ycoord,
+                                   data_variables[[19]]$ycoord,
+                                   data_variables[[20]]$ycoord),
+                       
+                       bat = c(data_variables[[1]]$batimetria,
+                               data_variables[[2]]$batimetria,
+                               data_variables[[3]]$batimetria,
+                               data_variables[[4]]$batimetria,
+                               data_variables[[5]]$batimetria,
+                               data_variables[[6]]$batimetria,
+                               data_variables[[7]]$batimetria,
+                               data_variables[[8]]$batimetria,
+                               data_variables[[9]]$batimetria,
+                               data_variables[[10]]$batimetria,
+                               data_variables[[11]]$batimetria,
+                               data_variables[[12]]$batimetria,
+                               data_variables[[13]]$batimetria,
+                               data_variables[[14]]$batimetria,
+                               data_variables[[15]]$batimetria,
+                               data_variables[[16]]$batimetria,
+                               data_variables[[17]]$batimetria,
+                               data_variables[[18]]$batimetria,
+                               data_variables[[19]]$batimetria,
+                               data_variables[[20]]$batimetria),
+                       time = rep(1:k, each = 10000))
+
+
+spatial_effect <- data.frame(spatial = c(variables$x.sample.1,
+                                         variables$x.sample.2,
+                                         variables$x.sample.3,
+                                         variables$x.sample.4,
+                                         variables$x.sample.5,
+                                         variables$x.sample.6,
+                                         variables$x.sample.7,
+                                         variables$x.sample.8,
+                                         variables$x.sample.9,
+                                         variables$x.sample.10,
+                                         variables$x.sample.11,
+                                         variables$x.sample.12,
+                                         variables$x.sample.13,
+                                         variables$x.sample.14,
+                                         variables$x.sample.15,
+                                         variables$x.sample.16,
+                                         variables$x.sample.17,
+                                         variables$x.sample.18,
+                                         variables$x.sample.19,
+                                         variables$x.sample.20),
+                       
+                       x_coord = c(data_variables[[1]]$xcoord,
+                                   data_variables[[2]]$xcoord,
+                                   data_variables[[3]]$xcoord,
+                                   data_variables[[4]]$xcoord,
+                                   data_variables[[5]]$xcoord,
+                                   data_variables[[6]]$xcoord,
+                                   data_variables[[7]]$xcoord,
+                                   data_variables[[8]]$xcoord,
+                                   data_variables[[9]]$xcoord,
+                                   data_variables[[10]]$xcoord,
+                                   data_variables[[11]]$xcoord,
+                                   data_variables[[12]]$xcoord,
+                                   data_variables[[13]]$xcoord,
+                                   data_variables[[14]]$xcoord,
+                                   data_variables[[15]]$xcoord,
+                                   data_variables[[16]]$xcoord,
+                                   data_variables[[17]]$xcoord,
+                                   data_variables[[18]]$xcoord,
+                                   data_variables[[19]]$xcoord,
+                                   data_variables[[20]]$xcoord),
+                       
+                       y_coord = c(data_variables[[1]]$ycoord,
+                                   data_variables[[2]]$ycoord,
+                                   data_variables[[3]]$ycoord,
+                                   data_variables[[4]]$ycoord,
+                                   data_variables[[5]]$ycoord,
+                                   data_variables[[6]]$ycoord,
+                                   data_variables[[7]]$ycoord,
+                                   data_variables[[8]]$ycoord,
+                                   data_variables[[9]]$ycoord,
+                                   data_variables[[10]]$ycoord,
+                                   data_variables[[11]]$ycoord,
+                                   data_variables[[12]]$ycoord,
+                                   data_variables[[13]]$ycoord,
+                                   data_variables[[14]]$ycoord,
+                                   data_variables[[15]]$ycoord,
+                                   data_variables[[16]]$ycoord,
+                                   data_variables[[17]]$ycoord,
+                                   data_variables[[18]]$ycoord,
+                                   data_variables[[19]]$ycoord,
+                                   data_variables[[20]]$ycoord),
+                       
+                       bat = c(data_variables[[1]]$batimetria,
+                               data_variables[[2]]$batimetria,
+                               data_variables[[3]]$batimetria,
+                               data_variables[[4]]$batimetria,
+                               data_variables[[5]]$batimetria,
+                               data_variables[[6]]$batimetria,
+                               data_variables[[7]]$batimetria,
+                               data_variables[[8]]$batimetria,
+                               data_variables[[9]]$batimetria,
+                               data_variables[[10]]$batimetria,
+                               data_variables[[11]]$batimetria,
+                               data_variables[[12]]$batimetria,
+                               data_variables[[13]]$batimetria,
+                               data_variables[[14]]$batimetria,
+                               data_variables[[15]]$batimetria,
+                               data_variables[[16]]$batimetria,
+                               data_variables[[17]]$batimetria,
+                               data_variables[[18]]$batimetria,
+                               data_variables[[19]]$batimetria,
+                               data_variables[[20]]$batimetria),
+                       time = rep(1:k, each = 10000))
+
+
+temp_data <- data.frame(temp = c(data_variables[[1]]$temp,
+                                   data_variables[[2]]$temp,
+                                   data_variables[[3]]$temp,
+                                   data_variables[[4]]$temp,
+                                   data_variables[[5]]$temp,
+                                   data_variables[[6]]$temp,
+                                   data_variables[[7]]$temp,
+                                   data_variables[[8]]$temp,
+                                   data_variables[[9]]$temp,
+                                   data_variables[[10]]$temp,
+                                   data_variables[[11]]$temp,
+                                   data_variables[[12]]$temp,
+                                   data_variables[[13]]$temp,
+                                   data_variables[[14]]$temp,
+                                   data_variables[[15]]$temp,
+                                   data_variables[[16]]$temp,
+                                   data_variables[[17]]$temp,
+                                   data_variables[[18]]$temp,
+                                   data_variables[[19]]$temp,
+                                   data_variables[[20]]$temp),
+                       
+                       x_coord = c(data_variables[[1]]$xcoord,
+                                   data_variables[[2]]$xcoord,
+                                   data_variables[[3]]$xcoord,
+                                   data_variables[[4]]$xcoord,
+                                   data_variables[[5]]$xcoord,
+                                   data_variables[[6]]$xcoord,
+                                   data_variables[[7]]$xcoord,
+                                   data_variables[[8]]$xcoord,
+                                   data_variables[[9]]$xcoord,
+                                   data_variables[[10]]$xcoord,
+                                   data_variables[[11]]$xcoord,
+                                   data_variables[[12]]$xcoord,
+                                   data_variables[[13]]$xcoord,
+                                   data_variables[[14]]$xcoord,
+                                   data_variables[[15]]$xcoord,
+                                   data_variables[[16]]$xcoord,
+                                   data_variables[[17]]$xcoord,
+                                   data_variables[[18]]$xcoord,
+                                   data_variables[[19]]$xcoord,
+                                   data_variables[[20]]$xcoord),
+                       
+                       y_coord = c(data_variables[[1]]$ycoord,
+                                   data_variables[[2]]$ycoord,
+                                   data_variables[[3]]$ycoord,
+                                   data_variables[[4]]$ycoord,
+                                   data_variables[[5]]$ycoord,
+                                   data_variables[[6]]$ycoord,
+                                   data_variables[[7]]$ycoord,
+                                   data_variables[[8]]$ycoord,
+                                   data_variables[[9]]$ycoord,
+                                   data_variables[[10]]$ycoord,
+                                   data_variables[[11]]$ycoord,
+                                   data_variables[[12]]$ycoord,
+                                   data_variables[[13]]$ycoord,
+                                   data_variables[[14]]$ycoord,
+                                   data_variables[[15]]$ycoord,
+                                   data_variables[[16]]$ycoord,
+                                   data_variables[[17]]$ycoord,
+                                   data_variables[[18]]$ycoord,
+                                   data_variables[[19]]$ycoord,
+                                   data_variables[[20]]$ycoord),
+                       
+                       bat = c(data_variables[[1]]$batimetria,
+                               data_variables[[2]]$batimetria,
+                               data_variables[[3]]$batimetria,
+                               data_variables[[4]]$batimetria,
+                               data_variables[[5]]$batimetria,
+                               data_variables[[6]]$batimetria,
+                               data_variables[[7]]$batimetria,
+                               data_variables[[8]]$batimetria,
+                               data_variables[[9]]$batimetria,
+                               data_variables[[10]]$batimetria,
+                               data_variables[[11]]$batimetria,
+                               data_variables[[12]]$batimetria,
+                               data_variables[[13]]$batimetria,
+                               data_variables[[14]]$batimetria,
+                               data_variables[[15]]$batimetria,
+                               data_variables[[16]]$batimetria,
+                               data_variables[[17]]$batimetria,
+                               data_variables[[18]]$batimetria,
+                               data_variables[[19]]$batimetria,
+                               data_variables[[20]]$batimetria),
+                       time = rep(1:k, each = 10000))
+
+
+plot_muestreo <- list()
+for(i in 1:50) {
+  print(i)
+  plot_muestreo[[i]] <- ggplot(data = data_all) + theme_bw() +
+  geom_tile(aes(x=x_coord, y=y_coord, fill=probability)) + labs(fill="Probability", x = "", y = "") + scale_fill_viridis_c(option = "turbo") + geom_point(data=data_random_final[[i]], aes(x=xcoord, y=ycoord), shape = 3,colour = "white")  + facet_wrap(~ time)
+}
+
+plot_muestreo_hist <- list()
+for(i in 1:50) {
+ plot_muestreo_hist[[i]] <- ggplot(data_random_final[[i]], aes(x=probability)) +
+ geom_histogram(aes(y=..density..), colour="black", fill="white")+
+ geom_density(alpha=.2, fill="#FF6666") +  labs(x = "Probability") + facet_wrap(~time) + theme_bw() 
+}
+
+plot_ocurrences <- list()
+for(i in 1:50) {
+ plot_ocurrences[[i]] <- ggplot(data_random_final[[i]], aes(x=factor(ocurrences))) + 
+  geom_bar() + facet_wrap(~time) + theme_bw() + xlab(label = "Ocurrences") + ylab(label = "") 
+}
+```
+
+# Simulation
+
+## Steps for the probability simulation
+
+Why we simulate? Simulation allows us to reproduce the behavior in space and time of a random variable under controlled conditions, e.g. the probability of being present of a fish population. Therefore, the first thing we have to think about when we simulate is what our variable of interest depends on, and come up with a model that takes into account the nature of the variable of interest. 
+
+Normally we do not know the population. Instead, we have a sample of the population, so we propose a model and make inference on the parameters to obtain representative information of the population. However, if we simulate the population we are aware of the parameters and we can tell if our model estimates correctly or not.  
+
+### Step 1: model the probability of being presence in space and time
+
+First of all, we need to set up a model for the probability of being present. Here, based on the literature, we propose the following model: 
+
+$$\text{Ocurrences}(s,t) \sim \text{Bernouilli}(\pi(s,t)),$$
+$$logit(\pi(s,t)) = \beta_{0} + \beta_{1}(Bathymetry) + \beta_{2}(Temperature) + f(\text{time}) + v(s,t),$$
+$$v(s,t) = \rho \times U(s,t-1),$$
+$$U(s,t) \sim \text{GMRF}(0, \Sigma),$$
+where, $\text{Ocurrences}(s,t)$ is the variable of interest in space s and time t. We have used a Bernouilli distribution because presence/absences data (ocurrences) is a categorical variable with two options. Then, the probability in space $s$ and time $t$ is $\pi(s,t)$ linked to a predictor by the logit link function. Finally the predictor is composed of an intercept $\beta_{0}$, two covariates (temperature and bathymetry), both with a linear effect $\beta_{1}$ and $\beta_{2}$ ; a time trend $f(time)$ and; a spatial autorregressive effect $v(s,t)$.
+
+In the next steps we will go deeper into how to simulate each of the terms in the probability model.
+
+### Step 2: Simulate each of the terms in the probability model
+
+Once we have the model, in order to simulate different scenarios of the probability of a fish population in space and time, we need to simulate each of the effects of the model predictor. 
+
+#### Spatio-temporal effect 
+
+First, we simulate the spatio-temporal effect $v(s,t)$ as Krainski *et al.* (2018). They illustrate an example of correlated spatial simulation over time using the function *book.rspde* available in the file *spde-book-function.R*. In this study, with the help of this function, we have performed the simulation of a spatial term for each year as a **Gaussian Markovian Random Field** (GMRF) with Matérn covariance $\Sigma$ and 0 mean. Then, each of the simulated spatial effect is correlated over time as an autoregressive of order 1 (AR 1). 
+
+```{r, eval = FALSE}
+# Example of the code use to simulate the spatio-temporal effect
+## Mesh
+prmesh1 <- inla.mesh.2d(loc = locations, max.edge = c(0.4, 1))
+
+## Parameters: variance and kappa (related with the spatial range)
+params <- c(variance = variance, kappa = kappa)
+
+## book.rspde function from Krainski *et al.* (2018)
+x_k <- book.rspde(locations,
+  range = sqrt(8) / params[2],
+  sigma = sqrt(params[1]), n = years, mesh = prmesh1,
+  return.attributes = TRUE
+)
+
+## Adding autocorrelation of order 1 to the spatial effect
+x <- x_k
+for (j in 2:k) {
+  x[, j] <- rho * x[, j - 1] + sqrt(1 - rho^2) * x_k[, j]
+}
+```
+
+Figure 1 shows an example of a simulation of a correlated spatial effect over 20 years. We can see how the spatial effect has an autoregressive behavior over time. 
+
+```{r, fig.align='center', echo = FALSE, fig.cap="Figure 1. Simulation of spatio-temporal effect (20 years)"}
+ggplot(data = spatial_effect) + theme_bw() + geom_tile(aes(x=x_coord, y=y_coord, fill=spatial)) + labs(fill="Spatial effect", x = "", y = "") + scale_fill_viridis_c(option = "turbo") + facet_wrap(~ time)
+```
+
+#### Other effects: intercept, bathymetry, temperature and temporal trend {.tabset}
+
+When we model the probability, we also add an intercept $\beta_{0}$ and two covariates $f(\text{Bathymetry})$ and $\beta_{1}Temperature$ in our predictor. Hence, to simulate the intercept we will simply give a fixed value to the parameter $\beta_{0}$. Next, we have chosen bathymetry as a covariate, it represents the depth of the seabed and does not usually have a linear relationship with the probability. In fact, the relationship between probability and bathymetry differs depending on the species. 
+
+In our study, we have simulated the bathymetry so that in a range of 0-800 meters the probability peaks are found at intermediate bathymetries (approximately 200-400 m). Figura 3 shows the simulated bathymetry, which remains constant over time.
+
+In terms of temperature, it has been simulated assuming a positive linear relationship. However, the primary distinction between bathymetry and temperature lies in the dynamic nature of temperature. Consequently, we have simulated the temperature change, incorporating an annual increase of 0.5ºC. 
+
+##### Bathymetry
+
+```{r, fig.align='center', echo = FALSE, fig.cap="Figure 2. Simulation of the bathymetry", out.width="50%"}
+ggplot(data = data_all) + theme_bw() + geom_tile(aes(x=x_coord, y=y_coord, fill=bat)) + labs(fill="Bathymetry", x = "", y = "") + scale_fill_viridis_c(option = "turbo")
+```
+
+##### Temperature
+
+```{r, fig.align='center', echo = FALSE, fig.cap="Figure 3. Simulation of temperature (20 years)"}
+ggplot(data = temp_data) + theme_bw() + geom_tile(aes(x=x_coord, y=y_coord, fill=temp)) + labs(fill="Temperature", x = "", y = "") + scale_fill_viridis_c(option = "turbo") + facet_wrap(~ time)
+```
+
+### Step 3: Simulate fish population probability
+
+At this point, we have already fixed all the parameters and simulated the components of our predictor. So, we are able to simulate the probability of the fish population. To do this, we sum all the effects and make the exponent to bring it to the scale of the interest parameter ($\pi$ probability). 
+
+```{r, eval = FALSE}
+# Example of code to simulate the predictor of probability
+ lin_pred_mu <- list()
+  linear_combination <- list()
+  for (i in 1:k) {
+    print(i)
+    linear_combination[[i]] <- beta_0 +
+      beta_1 * variables$x_bat +
+      beta_2 * (variables$x_bat)^2 +
+      beta_3 * variables[,i+22] +
+      variables[,i] +
+      vector_tiempo[i]
+    
+    lin_pred_mu[[i]] <- boot::inv.logit(linear_combination[[i]])
+  }
+```
+
+Figure 4 shows an example of a simulated probability for a fish population. We can see that the maximum probability patches are found at intermediate depths and seems to increase with time due to the increase of temperature. Moreover, the distribution of probability over time is in agreement with the simulated spatio-temporal effect. 
+
+```{r, fig.align='center', echo = FALSE, fig.cap="Figure 4. Simulation of probability scenario (20 years)"}
+ggplot(data = data_all) + theme_bw() +
+  geom_tile(aes(x=x_coord, y=y_coord, fill=probability)) + labs(fill="probability", x = "", y = "") + scale_fill_viridis_c(option = "turbo",
+                                   limits = c(0,1)) + facet_wrap(~ time)
+```
+
+## Steps to reproduce presence/absence information {.tabset}
+
+Once we have the probability scenario, we must replicate the sampling. In this case, we have chosen to perform a random sampling scenario. Likewise, we will set a **cutoff** of **0.5**, so that anything above this probability value will be considered a presence. We will repeat this process a total of 50 times, so we can be sure that the results are not influenced by simulation artefacts. 
+ 
+```{r, eval = FALSE}
+# Example of code to sampling the simulated biomass
+## Random sampling
+random_sampling <- list()
+for (i in 1:k) {
+  isel <- sample(1:n, m)
+  random_sampling[[i]] <- simulated_data[[i]][isel, ]
+}
+```
+
+On the one hand, the following figures show a random sampling of the simulated biomass for each year of the study. As we could see there is not a pattern in the intensity of the points over space and time. Regarding the distribution of the probability we can observed in the histograms which range of probability values have been selected for each year. Finally, the figures with the ocurrences display the presences/absence data use to fit the models.
+
+### Random sampling {.tabset .tabset-dropdown}
+
+```{r, results='asis'}
+for (i in seq_along(plot_muestreo)) {
+  cat(paste0("#### Random sampling ", i, "\n\n"))
+  print(plot_muestreo[[i]])
+  cat("\n\n")
+}
+```
+
+### Histograms {.tabset .tabset-dropdown}
+
+```{r,results='asis'}
+for (i in seq_along(plot_muestreo_hist)) {
+  cat(paste0("#### Probability distribution", i, "\n\n"))
+  print(plot_muestreo_hist[[i]])
+  cat("\n\n")
+}
+```
+
+### Ocurrences {.tabset .tabset-dropdown}
+
+```{r,results='asis'}
+for (i in seq_along(plot_ocurrences)) {
+  cat(paste0("#### Ocurrences data", i, "\n\n"))
+  print(plot_ocurrences[[i]])
+  cat("\n\n")
+}
+```
+
+# Statistical modeling
+
+One we have performed the simulation protocol, our next step is to establish a model to test. In our case, we aim to apply Bayesian Additive Regression Trees (BART) as Species Distribution Models (SDMs). BART is a non-parametric Bayesian regression approach based on a sum-of-trees model. Then, the model applied in this work was as follows: 
+
+$$Y_{i} \sim Ber(\pi_{i}), i = 1,...,n, \\
+    \phi^{-1}(\pi) = \sum^{m}_{j}g_{j}(X,T_{j},M_{j}),$$
+
+where, $Y_{i}$ is our response variable (presence/pseudo-absence of species) in each observation $i$ associated with a Bernoulli probability distribution; $\pi_{i}$ is the probability of presence linked to the predictor by a link function $\phi^{-1}$; then, $g_{j}$ is the $j-th$ tree of the form $g_{j}(X;T_{j}M_{j})$, where $m$ is the total number of trees, $X$ is a vector of multiple covariates, $T_{j}$ represents a binary tree structure consisting of a set of interior decision rules and a set of terminal nodes, and $M_{j}={\mu_{1j},...,\mu_{jb}}$ denote a set of parameter values.
+
+```{r, include = FALSE}
+load("./final_analysis.RData")
+```
+
+## Model fit
+
+Regarding the model fit, we will first exclude the last 3 years from the database, so we will use data from year 1 to 17 for fitting, and from 18 to 20, we will project into the future.
+
+The model fitting is conducted for the 50 sampling scenarios. Additionally, we extract the probability **cutoff** for each of these models, using **TSS** as the maximization statistic. With the adjusted model, we can calculate the intra-sample validation measures, which are **sensitivity**, **specificity**, and **accuracy**). As can be seen in Table 1, all the calculated measures are around the value of 1, indicating that the fit has been good.
+
+```{r, eval = FALSE}
+## Example of a BART model fitting in R
+bart_fit <- list()
+for(i in 1:50) {
+  bart_fit[[i]] <- dbarts::bart(x.train = data_random_17[[i]][,c(2,3,4,5,7)],
+                           y.train = data_random_17[[i]]$ocurrences,
+                           keeptrees = TRUE)
+}
+```
+
+```{r, echo = FALSE}
+# Result of intra-validation
+knitr::kable(summary(data_measures_intra), format = "markdown", align = "c", caption = "Table 1. Measures of sensitivity, specificity and accuracy for the intra-validation of all 50 sampling scenarios.")
+```
+
+## Model prediction {.tabset}
+
+At this point, with the adjusted model, we can proceed to make predictions in those unsampled locations. In our case, we will extract the 2.5th, 50th, and 97.5th quantiles from the posterior predictive distribution, as well as the mean.
+
+In the breakdown figures, we can observe the model's predictions in space and time for all 50 sampling scenarios. Finally and most important, in Figure 5, we depict the values of specificity, sensitivity, and accuracy for external validation (median, quantile 2.5 and 97.5 %). In detail, we can observe that for some years, sensitivity is somewhat low, and for year 2, specificity is quite low. Nevertheless, the balance between the two presence/absence identification (accuracy) remains above 0.75 at all times.
+
+```{r, eval = FALSE}
+## Example of how to predict with a BART model
+pred_BART <- list()
+for (j in 1:50) {
+  print(j)
+  pred_BART_j <- list()  # Nueva lista para cada iteración de j
+  for (i in 1:k) {
+    print(i)
+    pred_BART_j[[i]] <- predict2.bart(bart_fit[[j]],
+                                      x.layers = raster_list[[i]],
+                                      quantiles = c(0.025, 0.5, 0.975)) 
+    names(pred_BART_j[[i]]) <- c("predicted", "q0025", "median", "q0975")
+  }
+  pred_BART[[j]] <- pred_BART_j
+}
+```
+
+### Extra-validation (sensitivity, specificity and accuracy)
+
+```{r, fig.align='center', echo = FALSE, fig.cap="Figure 5. Simulation of probability scenario (20 years)"}
+measures_plot_f <- ggplot(data_measures_long, aes(x = time, y = Value, color = Measure_Type, linetype = ifelse(grepl("median", Variable), "Median", ifelse(grepl("q2.5", Variable), "Q2.5", "Q97.5")))) +
+  geom_line() +
+  labs(x = "Time", y = "", color = "Measure", linetype = "Statistic") +
+  scale_x_continuous(breaks = seq(0, 20, 1)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_color_manual(values = c("Accuracy" = "#1f78b4", "Sensitivity" = "#e41a1c", "Specificity" = "#33a02c")) +
+  scale_linetype_manual(values = c("Median" = "solid", "Q2.5" = "dashed", "Q97.5" = "dashed")) +
+  theme_minimal()
+measures_plot_f
+```
+
+
+### Prediction for each 50 sampling scenarios {.tabset .tabset-dropdown}
+
+```{r,results='asis'}
+for (i in seq_along(plot_pred)) {
+  cat(paste0("#### Median of the predictive posterior distribution", i, "\n\n"))
+  print(plot_pred[[i]])
+  cat("\n\n")
+}
+```
+
+
